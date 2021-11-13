@@ -14,9 +14,11 @@ exports.getQuestions = async (req, res) => {
             answers: question.answers
         }))
 
+        // save correctAnswers
         const correctAnswers = {}
         questions.forEach((question) => correctAnswers[question._id] = Number(question.correctAnswer))
 
+        // create new attempt
         const attempt = new Attempt({
             _id: new mongoose.Types.ObjectId(),
             questions: newQuestions,
@@ -27,8 +29,11 @@ exports.getQuestions = async (req, res) => {
             score: 0,
             scoreText: '',
         })
+
+        // save attempt to DB
         await attempt.save()
 
+        // return attempt to user
         return res.status(201).json({
             _id: attempt._id,
             questions: attempt.questions,
@@ -53,6 +58,9 @@ exports.submitQuiz = async (req, res) => {
 
         // destructuring
         const { correctAnswers, completed } = attempt
+
+        // check if attempt is already completed
+        // --> if yes then return attempt only, no further update
         if (completed) return res.status(200).json(attempt)
 
         // compute score
@@ -68,6 +76,7 @@ exports.submitQuiz = async (req, res) => {
         else if (score < 9) scoreText = 'Well done!'
         else scoreText = 'Perfect'
 
+        // update attempt
         await attempt.updateOne({
             completed: true,
             score,
