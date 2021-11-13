@@ -6,22 +6,17 @@ exports.getQuestions = async (req, res) => {
     try {
         const questions = await Questions.aggregate([{ $sample: { size: 10 }}])
 
-        // remove correctAnswer in each question
-        const newQuestions = []
-        questions.forEach((question) => newQuestions.push({
-            _id: question._id,
-            text: question.text,
-            answers: question.answers
-        }))
-
         // save correctAnswers
         const correctAnswers = {}
         questions.forEach((question) => correctAnswers[question._id] = Number(question.correctAnswer))
 
+        // remove correctAnswer in each question
+        questions.map((question) => delete question.correctAnswer)
+
         // create new attempt
         const attempt = new Attempt({
             _id: new mongoose.Types.ObjectId(),
-            questions: newQuestions,
+            questions,
             completed: false,
             startedAt: new Date(),
             correctAnswers,
